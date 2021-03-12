@@ -47,6 +47,19 @@
 #include "dsstypes.h"
 #include <string.h>
 
+#define PRINT_HEADER_IF_NECESSARY(_header_, _fp_) \
+    if (print_header) { \
+        static const char* _HEADER_ = _header_; \
+        static int header_not_printed = 1; \
+        if (header_not_printed) { \
+            fprintf(stdout, "Header: %s\n", _HEADER_); \
+            PR_STRT(_fp_); \
+            PR_STR(_fp_, _HEADER_, strlen(_HEADER_)); \
+            PR_END(_fp_); \
+            header_not_printed = 0; \
+        } \
+    }
+
 /*
  * Function Prototypes
  */
@@ -165,6 +178,8 @@ static FILE *fp = NULL;
         
    if (fp == NULL)
         fp = print_prep(CUST, 0);
+    
+    PRINT_HEADER_IF_NECESSARY("C_CUSTKEY|C_NAME|C_ADDRESS|C_NATIONKEY|C_PHONE|C_ACCTBAL|C_MKTSEGMENT|C_COMMENT", fp);
 
    PR_STRT(fp);
    PR_HUGE(fp, &c->custkey);
@@ -189,6 +204,8 @@ static FILE *fp = NULL;
 int
 pr_order(order_t *o, int mode)
 {
+    static int header_printed = 0;
+
     static FILE *fp_o = NULL;
     static int last_mode = 0;
         
@@ -199,6 +216,12 @@ pr_order(order_t *o, int mode)
         fp_o = print_prep(ORDER, mode);
         last_mode = mode;
         }
+
+    PRINT_HEADER_IF_NECESSARY(
+        "O_ORDERKEY|O_CUSTKEY|O_ORDERSTATUS|O_TOTALPRICE|O_ORDERDATE|O_ORDERPRIORITY|O_CLERK|O_SHIPPRIORITY|O_COMMENT",
+        fp_o
+    );
+
     PR_STRT(fp_o);
     PR_HUGE(fp_o, &o->okey);
     PR_HUGE(fp_o, &o->custkey);
@@ -220,6 +243,7 @@ pr_order(order_t *o, int mode)
 int
 pr_line(order_t *o, int mode)
 {
+
     static FILE *fp_l = NULL;
     static int last_mode = 0;
     long      i;
@@ -231,6 +255,8 @@ pr_line(order_t *o, int mode)
         fp_l = print_prep(LINE, mode);
         last_mode = mode;
         }
+
+    PRINT_HEADER_IF_NECESSARY("L_ORDERKEY|L_PARTKEY|L_SUPPKEY|L_LINENUMBER|L_QUANTITY|L_EXTENDEDPRICE|L_DISCOUNT|L_TAX|L_RETURNFLAG|L_LINESTATUS|L_SHIPDATE|L_COMMITDATE|L_RECEIPTDATE|L_SHIPINSTRUCT|L_SHIPMODE|L_COMMENT", fp_l);
 
     for (i = 0; i < o->lines; i++)
         {
@@ -280,6 +306,8 @@ static FILE *p_fp = NULL;
 
     if (p_fp == NULL)
         p_fp = print_prep(PART, 0);
+    
+    PRINT_HEADER_IF_NECESSARY("P_PARTKEY|P_NAME|P_MFGR|P_BRAND|P_TYPE|P_SIZE|P_CONTAINER|P_RETAILPRICE|P_COMMENT", p_fp);
 
    PR_STRT(p_fp);
    PR_HUGE(p_fp, &part->partkey);
@@ -307,6 +335,8 @@ pr_psupp(part_t *part, int mode)
 
     if (ps_fp == NULL)
         ps_fp = print_prep(PSUPP, mode);
+ 
+    PRINT_HEADER_IF_NECESSARY("PS_PARTKEY|PS_SUPPKEY|PS_AVAILQTY|PS_SUPPLYCOST|PS_COMMENT", ps_fp);
 
    for (i = 0; i < SUPP_PER_PART; i++)
       {
@@ -338,10 +368,14 @@ pr_part_psupp(part_t *part, int mode)
 int
 pr_supp(supplier_t *supp, int mode)
 {
+    static int header_printed = 0;
+
 static FILE *fp = NULL;
         
    if (fp == NULL)
         fp = print_prep(SUPP, mode);
+    
+   PRINT_HEADER_IF_NECESSARY("S_SUPPKEY|S_NAME|S_ADDRESS|S_NATIONKEY|S_PHONE|S_ACCTBAL|S_COMMENT", fp); 
 
    PR_STRT(fp);
    PR_HUGE(fp, &supp->suppkey);
@@ -363,6 +397,8 @@ static FILE *fp = NULL;
         
    if (fp == NULL)
         fp = print_prep(NATION, mode);
+    
+   PRINT_HEADER_IF_NECESSARY("N_NATIONKEY|N_NAME|N_REGIONKEY|N_COMMENT", fp);
 
    PR_STRT(fp);
    PR_HUGE(fp, &c->code);
@@ -382,6 +418,8 @@ static FILE *fp = NULL;
    if (fp == NULL)
         fp = print_prep(REGION, mode);
 
+
+   PRINT_HEADER_IF_NECESSARY("R_REGIONKEY|R_NAME|R_COMMENT", fp);
    PR_STRT(fp);
    PR_HUGE(fp, &c->code);
    PR_STR(fp, c->text, REGION_LEN);

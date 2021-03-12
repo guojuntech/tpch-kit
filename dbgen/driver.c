@@ -178,25 +178,25 @@ long sd_part_psupp (int child, DSS_HUGE skip_count);
 
 tdef tdefs[] =
 {
-	{"part.tbl", "part table", 200000,
+	{"part", "part.csv", "part table", 200000,
 		pr_part, sd_part, PSUPP, 0},
-	{"partsupp.tbl", "partsupplier table", 200000,
+	{"partsupp", "partsupp.csv", "partsupplier table", 200000,
 		pr_psupp, sd_psupp, NONE, 0},
-	{"supplier.tbl", "suppliers table", 10000,
+	{"supplier", "supplier.csv", "suppliers table", 10000,
 		pr_supp, sd_supp, NONE, 0},
-	{"customer.tbl", "customers table", 150000,
+	{"customer", "customer.csv", "customers table", 150000,
 		pr_cust, sd_cust, NONE, 0},
-	{"orders.tbl", "order table", 150000,
+	{"orders", "orders.csv", "order table", 150000,
 		pr_order, sd_order, LINE, 0},
-	{"lineitem.tbl", "lineitem table", 150000,
+	{"lineitem", "lineitem.csv", "lineitem table", 150000,
 		pr_line, sd_line, NONE, 0},
-	{"orders.tbl", "orders/lineitem tables", 150000,
+	{"orders", "orders.csv", "orders/lineitem tables", 150000,
 		pr_order_line, sd_order, LINE, 0},
-	{"part.tbl", "part/partsupplier tables", 200000,
+	{"part", "part.csv", "part/partsupplier tables", 200000,
 		pr_part_psupp, sd_part, PSUPP, 0},
-	{"nation.tbl", "nation table", NATIONS_MAX,
+	{"nation", "nation.csv", "nation table", NATIONS_MAX,
 		pr_nation, NO_LFUNC, NONE, 0},
-	{"region.tbl", "region table", NATIONS_MAX,
+	{"region", "region.csv", "region table", NATIONS_MAX,
 		pr_region, NO_LFUNC, NONE, 0},
 };
 
@@ -379,12 +379,13 @@ usage (void)
 {
 	fprintf (stderr, "%s\n%s\n\t%s\n%s %s\n\n",
 		"USAGE:",
-		"dbgen [-{vf}][-T {pcsoPSOL}]",
+		"dbgen [-{vf}][-e][-T {pcsoPSOL}]",
 		"[-s <scale>][-C <procs>][-S <step>]",
 		"dbgen [-v] [-O m] [-s <scale>]",
 		"[-U <updates>]");
 	fprintf (stderr, "Basic Options\n===========================\n");
 	fprintf (stderr, "-C <n> -- separate data set into <n> chunks (requires -S, default: 1)\n");
+	fprintf (stderr, "-e     -- generate CSV header.\n");
 	fprintf (stderr, "-f     -- force. Overwrite existing files\n");
 	fprintf (stderr, "-h     -- display this message\n");
 	fprintf (stderr, "-q     -- enable QUIET mode\n");
@@ -452,7 +453,7 @@ process_options (int count, char **vector)
 	FILE *pF;
 	
 	while ((option = getopt (count, vector,
-		"b:C:d:fi:hO:P:qs:S:T:U:vz")) != -1)
+		"b:C:d:e:fi:hO:P:qs:S:T:U:vz")) != -1)
 	switch (option)
 	{
 		case 'b':				/* load distributions from named file */
@@ -473,6 +474,9 @@ process_options (int count, char **vector)
 			break;
 		case 'd':
 			delete_segments = atoi (optarg);
+			break;
+		case 'e':
+			print_header = 1;
 			break;
 		case 'f':				/* blind overwrites; Force */
 			force = 1;
@@ -685,6 +689,7 @@ main (int ac, char **av)
 	flt_scale = 1.0;
 	updates = 0;
 	step = -1;
+	print_header = 0;
 	tdefs[ORDER].base *=
 		ORDERS_PER_CUST;			/* have to do this after init */
 	tdefs[LINE].base *=

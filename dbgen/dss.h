@@ -174,6 +174,7 @@ typedef struct
 
 typedef struct
 {
+   char     *folder;
    char     *name;
    char     *comment;
    DSS_HUGE      base;
@@ -280,6 +281,7 @@ EXTERN int  step;
 EXTERN int	set_seeds;
 EXTERN char *d_path;
 EXTERN int  zstdout;
+EXTERN int print_header;
 
 /* added for segmented updates */
 EXTERN int insert_segments;

@@ -61,6 +61,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <errno.h>
+#include <libgen.h>
 #include <string.h>
 #ifdef HP
 #include <strings.h>
@@ -373,6 +374,22 @@ long      weight,
     return;
 }
 
+void ensure_dir_existed(const char* file_path) {
+    //char* folder = dirname(file_path);
+    for (char* p = strchr(file_path + 1, '/'); p; p = strchr(p + 1, '/')) {
+        *p = '\0';
+        fprintf(stderr, "mkdir: %s\n", file_path);
+        if (mkdir(file_path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == -1) {
+            if (errno != EEXIST) {
+                *p = '/';
+                fprintf(stderr, "mkdir error: %d\n", errno);
+                exit(-1);
+            }
+        }
+        *p = '/';
+    }
+}
+
 /*
  * standard file open with life noise
  */
@@ -389,9 +406,17 @@ tbl_open(int tbl, char *mode)
 
     if (*tdefs[tbl].name == PATH_SEP)
         strcpy(fullpath, tdefs[tbl].name);
-    else
-        sprintf(fullpath, "%s%c%s",
-            env_config(PATH_TAG, PATH_DFLT), PATH_SEP, tdefs[tbl].name);
+    else {
+        const char* folder = tdefs[tbl].folder;
+        if (folder && strlen(folder) > 0) {
+            sprintf(fullpath, "%s%c%s%c%s",
+                env_config(PATH_TAG, PATH_DFLT), PATH_SEP, tdefs[tbl].folder, PATH_SEP, tdefs[tbl].name);
+        } else {
+            sprintf(fullpath, "%s%c%s",
+                env_config(PATH_TAG, PATH_DFLT), PATH_SEP, tdefs[tbl].name);
+        }
+        ensure_dir_existed(fullpath);
+    }
 
     retcode = stat(fullpath, &fstats);
     if (retcode) {
